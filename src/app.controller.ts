@@ -1,9 +1,12 @@
-import { Controller, Get, Post } from '@nestjs/common';
+import { Controller, Get, HttpCode, Post, Req } from '@nestjs/common';
 import { AppService } from './app.service';
+import { OpenAI } from 'openai';
 
 @Controller()
 export class AppController {
   constructor(private readonly appService: AppService) {}
+  private readonly client = new OpenAI();
+  private readonly webhookSecret = process.env.OPENAI_WEBHOOK_VERIFICATION_KEY;
 
   @Get()
   getHello(): string {
@@ -11,7 +14,13 @@ export class AppController {
   }
 
   @Post('webhook')
-  webhook() {
+  @HttpCode(200)
+  webhook(@Req() req: any) {
+    const event = this.client.webhooks.unwrap(
+      req.body,
+      req.headers,
+      this.webhookSecret,
+    );
     return 'pong';
   }
 }
