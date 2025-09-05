@@ -6,13 +6,11 @@ import {
   Post,
   RawBodyRequest,
   Req,
-  Res,
   UnauthorizedException,
 } from '@nestjs/common';
 import { AppService } from './app.service';
 import { OpenAI } from 'openai';
-import { RealtimeCallIncomingWebhookEvent } from 'openai/resources/webhooks';
-import { Request, Response } from 'express';
+import { Request } from 'express';
 import { PhoneService } from './phone/phone.service';
 
 @Controller()
@@ -40,7 +38,7 @@ export class AppController {
       );
 
       if (event.type === 'realtime.call.incoming') {
-        return this.phoneService.handleIncomingCall();
+        return this.phoneService.handleIncomingCall(event.data.call_id);
       }
 
       return 'pong';
