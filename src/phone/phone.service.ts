@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import WebSocket from 'ws';
+import { WebSocket } from 'ws';
 import axios from 'axios';
 import { RealtimeSessionCreateRequest } from 'openai/resources/realtime/realtime';
 
