@@ -108,7 +108,6 @@ export class PhoneService implements OnModuleDestroy {
       );
       this.sockets.delete(callId);
     });
-  }
 
     ws.on('error', (err) => {
       this.logger.error(`WS error for ${callId}: ${err.message}`, err.stack);
@@ -116,7 +115,7 @@ export class PhoneService implements OnModuleDestroy {
   }
 
   async handleIncomingCall(callId: string) {
-    await this.acceptCall(callId);
+    await this.acceptCallWithRetry(callId);
     // Don’t block the HTTP handler; start WS in background
     setImmediate(() => {
       this.connect(callId).catch((e) =>
