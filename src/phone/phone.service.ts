@@ -1,10 +1,10 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, OnModuleDestroy } from '@nestjs/common';
 import { WebSocket } from 'ws';
 import axios from 'axios';
 import { RealtimeSessionCreateRequest } from 'openai/resources/realtime/realtime';
 
 @Injectable()
-export class PhoneService {
+export class PhoneService implements OnModuleDestroy {
   private readonly logger = new Logger(PhoneService.name);
   private readonly apiKey = process.env.OPENAI_API_KEY!;
   // optional: keep track of active sockets
@@ -140,5 +140,11 @@ export class PhoneService {
     const sock = this.sockets.get(callId);
     if (sock && sock.readyState === WebSocket.OPEN) sock.close(1000, 'done');
     this.sockets.delete(callId);
+  }
+
+  onModuleDestroy() {
+    for (const [id, sock] of this.sockets) {
+      sock.close(1000);
+    }
   }
 }
