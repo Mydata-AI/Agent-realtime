@@ -7,14 +7,13 @@ import { RealtimeSessionCreateRequest } from 'openai/resources/realtime/realtime
 export class PhoneService implements OnModuleDestroy {
   private readonly logger = new Logger(PhoneService.name);
   private readonly apiKey = process.env.OPENAI_API_KEY!;
-  // optional: keep track of active sockets
   private sockets = new Map<string, WebSocket>();
 
   private get authHeader() {
     return { Authorization: `Bearer ${this.apiKey}` };
   }
 
-  async acceptCall(
+  private async acceptCallWithRetry(
     callId: string,
     opts?: { instructions?: string; model?: string },
   ) {
@@ -87,12 +86,17 @@ export class PhoneService implements OnModuleDestroy {
       }
     });
 
+    ws.on('error', (err) => {
+      this.logger.error(`WS error for ${callId}: ${err.message}`);
+    });
+
     ws.on('close', (code, reason) => {
       this.logger.log(
         `WS closed for ${callId}: code=${code} reason=${reason.toString()}`,
       );
       this.sockets.delete(callId);
     });
+  }
 
     ws.on('error', (err) => {
       this.logger.error(`WS error for ${callId}: ${err.message}`, err.stack);
@@ -114,28 +118,19 @@ export class PhoneService implements OnModuleDestroy {
 
   async terminateCall(callId: string) {
     try {
-      await axios.post(
-        `https://api.openai.com/v1/realtime/calls/${callId}/hangup`,
-        null, // or {}
-        {
-          headers: {
-            Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-            'Content-Type': 'application/json', // optional for empty body
-          },
-        },
-      );
-      return { ok: true };
+      this.logger.log(`Handling incoming call: ${callId}`);
+      // Step 1: Accept the call (wait for success)
+      await this.acceptCallWithRetry(callId);
+
+      // Step 2: Connect WebSocket
+      await this.connect(callId);
     } catch (e: any) {
-      console.error(
-        'Hangup failed',
-        e.response?.status,
-        e.response?.data ?? e.message,
+      this.logger.error(
+        `Initialization failed for ${callId}: ${e.response?.data?.error?.message || e.message}`,
       );
-      return { ok: false, error: e.response?.data ?? e.message };
     }
   }
 
-  // Optional: expose a way to end a call/cleanup
   close(callId: string) {
     const sock = this.sockets.get(callId);
     if (sock && sock.readyState === WebSocket.OPEN) sock.close(1000, 'done');
