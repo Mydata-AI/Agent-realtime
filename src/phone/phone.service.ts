@@ -115,19 +115,6 @@ export class PhoneService implements OnModuleDestroy {
   }
 
   async handleIncomingCall(callId: string) {
-    await this.acceptCallWithRetry(callId);
-    // Don’t block the HTTP handler; start WS in background
-    setImmediate(() => {
-      this.connect(callId).catch((e) =>
-        this.logger.error(
-          `Failed to connect WS for ${callId}: ${e.message}`,
-          e.stack,
-        ),
-      );
-    });
-  }
-
-  async terminateCall(callId: string) {
     try {
       this.logger.log(`Handling incoming call: ${callId}`);
       // Step 1: Accept the call (wait for success)
