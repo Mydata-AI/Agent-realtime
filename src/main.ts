@@ -8,6 +8,11 @@ async function bootstrap() {
   });
 
   app.useWebSocketAdapter(new WsAdapter(app));
-  await app.listen(8080);
+
+  const port = process.env.PORT || 8080;
+  await app.listen(port, '0.0.0.0');
+
+  console.log(`App listening on ${port}`);
 }
+
 bootstrap();
