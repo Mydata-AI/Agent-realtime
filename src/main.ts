@@ -10,9 +10,11 @@ async function bootstrap() {
   app.useWebSocketAdapter(new WsAdapter(app));
 
   const port = process.env.PORT || 8080;
+  console.log('Starting Nest on port', port);
+
   await app.listen(port, '0.0.0.0');
 
-  console.log(`App listening on ${port}`);
+  console.log('Nest application successfully started');
 }
 
 bootstrap();
